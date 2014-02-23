@@ -2,6 +2,24 @@ var Observ = require("observ")
 
 var slice = Array.prototype.slice
 
+var ARRAY_METHODS = [
+    "concat", "slice", "every", "filter", "forEach", "indexOf",
+    "join", "lastIndexOf", "map", "reduce", "reduceRight",
+    "some", "toString", "toLocaleString"
+]
+
+var methods = ARRAY_METHODS.map(function (name) {
+    return [name, function () {
+        var res = this.list[name].apply(this.list, arguments)
+
+        if (res && Array.isArray(res)) {
+            res = ObservArray(res)
+        }
+
+        return res
+    }]
+})
+
 module.exports = ObservArray
 
 /*  ObservArray := (Array<T>) => Observ<
@@ -63,98 +81,88 @@ function ObservArray(initialList) {
                 }
 
                 valueList.splice(index, 1, value)
+                valueList._diff = [index, 1, value]
+
                 obs.set(valueList)
             })
         }
     })
 
     return ArrayMethods(obs, list)
-
-    // `obs.splice` is a mutable implementation of `splice()`
-    // that mutates both `list` and the internal `valueList` that
-    // is the current value of `obs` itself
-    function splice(index, amount) {
-        var args = slice.call(arguments, 0)
-        var valueList = obs().slice()
-
-        // generate a list of args to mutate the internal
-        // list of only values
-        var valueArgs = args.map(function (value, index) {
-            if (index === 0 || index === 1) {
-                return value
-            }
-
-            // must unpack observables that we are adding
-            return typeof value === "function" ? value() : value
-        })
-
-        valueList.splice.apply(valueList, valueArgs)
-        // we remove the observs that we remove
-        var removed = list.splice.apply(list, args)
-
-        valueList._diff = valueArgs
-
-        obs.set(valueList)
-        return removed
-    }
-
-    function get(index) {
-        return list[index]
-    }
-
-    function getLength() {
-        return list.length
-    }
 }
 
-function ArrayMethods(obs, list) {
-    obs.push = function () {
-        var args = slice.call(arguments)
-        args.unshift(list.length, 0)
-        obs.splice.apply(null, args)
+// `obs.splice` is a mutable implementation of `splice()`
+// that mutates both `list` and the internal `valueList` that
+// is the current value of `obs` itself
+function splice(index, amount) {
+    var args = slice.call(arguments, 0)
+    var valueList = this().slice()
 
-        return list.length
-    }
-    obs.pop = function () {
-        return obs.splice(list.length - 1, 1)[0]
-    }
-    obs.shift = function () {
-        return obs.splice(0, 1)[0]
-    }
-    obs.unshift = function () {
-        var args = slice.call(arguments)
-        args.unshift(0, 0)
-        obs.splice.apply(null, args)
+    // generate a list of args to mutate the internal
+    // list of only values
+    var valueArgs = args.map(function (value, index) {
+        if (index === 0 || index === 1) {
+            return value
+        }
 
-        return list.length
-    }
-    obs.reverse = function () {
-        throw new Error("Pull request welcome")
-    }
-    obs.sort = function () {
-        throw new Error("Pull request welcome")
-    }
+        // must unpack observables that we are adding
+        return typeof value === "function" ? value() : value
+    })
 
-    obs.concat = method(obs, list, "concat")
-    obs.slice = method(obs, list, "slice")
-    obs.every = method(obs, list, "every")
-    obs.filter = method(obs, list, "filter")
-    obs.forEach = method(obs, list, "forEach")
-    obs.indexOf = method(obs, list, "indexOf")
-    obs.join = method(obs, list, "join")
-    obs.lastIndexOf = method(obs, list, "lastIndexOf")
-    obs.map = method(obs, list, "map")
-    obs.reduce = method(obs, list, "reduce")
-    obs.reduceRight = method(obs, list, "reduceRight")
-    obs.some = method(obs, list, "some")
-    obs.toString = method(obs, list, "toString")
-    obs.toLocaleString = method(obs, list, "toLocaleString")
+    valueList.splice.apply(valueList, valueArgs)
+    // we remove the observs that we remove
+    var removed = this.list.splice.apply(this.list, args)
 
+    valueList._diff = valueArgs
+
+    this.set(valueList)
+    return removed
+}
+
+function get(index) {
+    return this.list[index]
+}
+
+function getLength() {
+    return this.list.length
+}
+
+function observArrayPush() {
+    var args = slice.call(arguments)
+    args.unshift(this.list.length, 0)
+    this.splice.apply(this, args)
+
+    return this.list.length
+}
+function observArrayPop() {
+    return this.splice(this.list.length - 1, 1)[0]
+}
+function observArrayShift() {
+    return this.splice(0, 1)[0]
+}
+function observArrayUnshift() {
+    var args = slice.call(arguments)
+    args.unshift(0, 0)
+    this.splice.apply(this, args)
+
+    return this.list.length
+}
+
+function ArrayMethods(obs) {
+    // TODO: optimize these closures
+    obs.push = observArrayPush
+    obs.pop = observArrayPop
+    obs.shift = observArrayShift
+    obs.unshift = observArrayUnshift
+    obs.reverse = notImplemented
+    obs.sort = notImplemented
+
+    methods.forEach(function (tuple) {
+        obs[tuple[0]] = tuple[1]
+    })
     return obs
 }
 
-function method(obs, list, name) {
-    return function () {
-        return list[name].apply(list, arguments)
-    }
+function notImplemented() {
+    throw new Error("Pull request welcome")
 }
