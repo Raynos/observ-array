@@ -14,10 +14,40 @@ An array containing observable values
 
 ## Example
 
-```js
-var observArray = require("observ-array")
+An `ObservArray` is an observable version of an array, every
+  mutation of the array or mutation of an observable element in
+  the array will cause the `ObservArray` to emit a new changed
+  plain javascript array.
 
-// TODO. Show example
+```js
+var ObservArray = require("observ-array")
+var ObservHash = require("observ-hash")
+var Observ = require("observ")
+var uuid = require("uuid")
+
+function createTodo(title) {
+  return ObservHash({
+    id: uuid(),
+    title: Observ(title || ""),
+    completed: Observ(false)
+  })
+}
+
+var state = ObservHash({
+  todos: ObservArray([
+    createTodo("some todo"),
+    createTodo("some other todo")
+  ])
+})
+
+state(function (currState) {
+  currState.todos.forEach(function (todo, index) {
+    console.log("todo", todo.title, index)
+  })
+})
+
+state.todos.get(0).title.set("some new title")
+state.todos.push(createTodo("another todo"))
 ```
 
 ## Installation
