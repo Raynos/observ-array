@@ -186,5 +186,15 @@ test("can add values to observ array", function (assert) {
     assert.end()
 })
 
-test("can add values to observ array & listen")
+test("can add values to observ array & listen", function (assert) {
+    var arr = ObservArray([])
+    var changes = []
+
+    arr(function (state) {
+        changes.push(state)
+    })
+
+    assert.end()
+})
+
 test("can remove values to observ & not blow up")
