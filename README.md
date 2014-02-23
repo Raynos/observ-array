@@ -41,6 +41,8 @@ var state = ObservHash({
 })
 
 state(function (currState) {
+  // currState.todos is a plain javascript todo
+  // currState.todos[0] is a plain javascript value
   currState.todos.forEach(function (todo, index) {
     console.log("todo", todo.title, index)
   })
