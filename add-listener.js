@@ -3,7 +3,7 @@ module.exports = addListener
 function addListener(observArray, observ) {
     var list = observArray.list
 
-    observ(function (value) {
+    return observ(function (value) {
         var valueList =  observArray().slice()
         var index = list.indexOf(observ)
 

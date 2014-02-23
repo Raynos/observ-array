@@ -46,13 +46,19 @@ function ObservArray(initialList) {
     obs.getLength = getLength
 
     // you better not mutate this list directly
+    // this is the list of observs instances
     obs.list = list
 
-    list.forEach(function (observ) {
-        if (typeof observ === "function") {
-            addListener(obs, observ)
-        }
-    })
+    var removeListeners = list.map(function (observ) {
+        return typeof observ === "function" ?
+            addListener(obs, observ) :
+            null
+    });
+    // this is a list of removal functions that must be called
+    // when observ instances are removed from `obs.list`
+    // not calling this means we do not GC our observ change
+    // listeners. Which causes rage bugs
+    obs.removeListeners = removeListeners
 
     return ArrayMethods(obs, list)
 }

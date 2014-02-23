@@ -194,7 +194,48 @@ test("can add values to observ array & listen", function (assert) {
         changes.push(state)
     })
 
+    arr.push(Observ("foo"))
+    arr.push(Observ("bar"))
+
+    arr.get(0).set("foo2")
+    arr.get(1).set("bar2")
+
+    assert.equal(changes.length, 4)
+
+    assert.deepEqual(changes[0].slice(), ["foo"])
+    assert.deepEqual(changes[1].slice(), ["foo", "bar"])
+    assert.deepEqual(changes[2].slice(), ["foo2", "bar"])
+    assert.deepEqual(changes[3].slice(), ["foo2", "bar2"])
+
     assert.end()
 })
 
-test("can remove values to observ & not blow up")
+test("can remove values to observ & not blow up", function (assert) {
+    var arr = ObservArray([ Observ("foo"), Observ("bar") ])
+    var changes = []
+
+    arr(function (state) {
+        changes.push(state)
+    })
+
+    var bar = arr.splice(1, 1)[0]
+
+    assert.doesNotThrow(function () {
+        bar.set("foobar")
+    })
+
+    arr.push(Observ("baz"))
+
+    var baz = arr.splice(1, 1)[0]
+
+    assert.doesNotThrow(function () {
+        baz.set("foobaz")
+    })
+
+    assert.equal(changes.length, 3)
+    assert.deepEqual(changes[0].slice(), ["foo"])
+    assert.deepEqual(changes[1].slice(), ["foo", "baz"])
+    assert.deepEqual(changes[2].slice(), ["foo"])
+
+    assert.end()
+})
