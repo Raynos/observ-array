@@ -47,7 +47,7 @@ function ObservArray(initialList) {
 
     // you better not mutate this list directly
     // this is the list of observs instances
-    obs.list = list
+    obs._list = list
 
     var removeListeners = list.map(function (observ) {
         return typeof observ === "function" ?
@@ -58,15 +58,15 @@ function ObservArray(initialList) {
     // when observ instances are removed from `obs.list`
     // not calling this means we do not GC our observ change
     // listeners. Which causes rage bugs
-    obs.removeListeners = removeListeners
+    obs._removeListeners = removeListeners
 
     return ArrayMethods(obs, list)
 }
 
 function get(index) {
-    return this.list[index]
+    return this._list[index]
 }
 
 function getLength() {
-    return this.list.length
+    return this._list.length
 }

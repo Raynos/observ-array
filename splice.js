@@ -13,7 +13,7 @@ function splice(index, amount) {
     var valueList = obs().slice()
 
     // generate a list of args to mutate the internal
-    // list of only values
+    // list of only obs
     var valueArgs = args.map(function (value, index) {
         if (index === 0 || index === 1) {
             return value
@@ -25,7 +25,7 @@ function splice(index, amount) {
 
     valueList.splice.apply(valueList, valueArgs)
     // we remove the observs that we remove
-    var removed = obs.list.splice.apply(obs.list, args)
+    var removed = obs._list.splice.apply(obs._list, args)
 
     var extraRemoveListeners = args.slice(2).map(function (observ) {
         return typeof observ === "function" ?
@@ -33,8 +33,8 @@ function splice(index, amount) {
             null
     })
     extraRemoveListeners.unshift(args[0], args[1])
-    var removedListeners = obs.removeListeners.splice
-        .apply(obs.removeListeners, extraRemoveListeners)
+    var removedListeners = obs._removeListeners.splice
+        .apply(obs._removeListeners, extraRemoveListeners)
 
     removedListeners.forEach(function (removeObservListener) {
         if (removeObservListener) {

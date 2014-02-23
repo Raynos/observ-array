@@ -10,7 +10,7 @@ var ARRAY_METHODS = [
 
 var methods = ARRAY_METHODS.map(function (name) {
     return [name, function () {
-        var res = this.list[name].apply(this.list, arguments)
+        var res = this._list[name].apply(this._list, arguments)
 
         if (res && Array.isArray(res)) {
             res = ObservArray(res)
@@ -40,13 +40,13 @@ function ArrayMethods(obs) {
 
 function observArrayPush() {
     var args = slice.call(arguments)
-    args.unshift(this.list.length, 0)
+    args.unshift(this._list.length, 0)
     this.splice.apply(this, args)
 
-    return this.list.length
+    return this._list.length
 }
 function observArrayPop() {
-    return this.splice(this.list.length - 1, 1)[0]
+    return this.splice(this._list.length - 1, 1)[0]
 }
 function observArrayShift() {
     return this.splice(0, 1)[0]
@@ -56,7 +56,7 @@ function observArrayUnshift() {
     args.unshift(0, 0)
     this.splice.apply(this, args)
 
-    return this.list.length
+    return this._list.length
 }
 
 
