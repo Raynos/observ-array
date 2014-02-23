@@ -25,6 +25,8 @@ module.exports = ObservArray
         properties that are the observables
 */
 function ObservArray(initialList) {
+    // list is the internal mutable list observ instances that
+    // all methods on `obs` dispatch to.
     var list = initialList
     var initialState = []
 
@@ -35,7 +37,43 @@ function ObservArray(initialList) {
     })
 
     var obs = Observ(initialState)
-    obs.splice = function (index, amount) {
+    obs.splice = splice
+
+    obs.get = get
+    obs.getLength = getLength
+
+    // you better not mutate this list directly
+    obs.list = list
+
+    list.forEach(function (observ) {
+        if (typeof observ === "function") {
+            observ(function (value) {
+                var valueList =  obs().slice()
+                var index = list.indexOf(observ)
+
+                // This code path should never hit. If this happens
+                // there's a bug in the cleanup code
+                if (index === -1) {
+                    var message = "observ-array: Unremoved observ listener"
+                    var err = new Error(message)
+                    err.list = list
+                    err.index = index
+                    err.observ = observ
+                    throw err
+                }
+
+                valueList.splice(index, 1, value)
+                obs.set(valueList)
+            })
+        }
+    })
+
+    return ArrayMethods(obs, list)
+
+    // `obs.splice` is a mutable implementation of `splice()`
+    // that mutates both `list` and the internal `valueList` that
+    // is the current value of `obs` itself
+    function splice(index, amount) {
         var args = slice.call(arguments, 0)
         var valueList = obs().slice()
 
@@ -50,30 +88,23 @@ function ObservArray(initialList) {
             return typeof value === "function" ? value() : value
         })
 
-        currentList.splice.apply(currentList, valueArgs)
+        valueList.splice.apply(valueList, valueArgs)
         // we remove the observs that we remove
         var removed = list.splice.apply(list, args)
 
-        // re-apply the `splice()` algorithm on the `obs` object
-        // so that we can access values directly
-        for (var i = args[0]; i < args[0] + args[1]; i++) {
-            obs[i] = undefined
-        }
-        for (var i = args[0]; i < args.length - 2; i++) {
-            obs[i] = args[i + 2]
-        }
+        valueList._diff = valueArgs
 
-        currentList._diff = valueArgs
-
-        obs.set(currentList)
+        obs.set(valueList)
         return removed
     }
 
-    list.forEach(function (index) {
-        obs[index] = list[index]
-    })
+    function get(index) {
+        return list[index]
+    }
 
-    return ArrayMethods(obs, list)
+    function getLength() {
+        return list.length
+    }
 }
 
 function ArrayMethods(obs, list) {
@@ -105,6 +136,7 @@ function ArrayMethods(obs, list) {
     }
 
     obs.concat = method(obs, list, "concat")
+    obs.slice = method(obs, list, "slice")
     obs.every = method(obs, list, "every")
     obs.filter = method(obs, list, "filter")
     obs.forEach = method(obs, list, "forEach")
