@@ -44,6 +44,7 @@ function ObservArray(initialList) {
 
     obs.get = get
     obs.getLength = getLength
+    obs.put = put
 
     // you better not mutate this list directly
     // this is the list of observs instances
@@ -65,6 +66,10 @@ function ObservArray(initialList) {
 
 function get(index) {
     return this._list[index]
+}
+
+function put(index, value) {
+    this.splice(index, 1, value)
 }
 
 function getLength() {
