@@ -1,3 +1,5 @@
+var setNonEnumerable = require("./lib/set-non-enumerable.js");
+
 module.exports = addListener
 
 function addListener(observArray, observ) {
@@ -19,7 +21,7 @@ function addListener(observArray, observ) {
         }
 
         valueList.splice(index, 1, value)
-        valueList._diff = [index, 1, value]
+        setNonEnumerable(valueList, "_diff", [index, 1, value])
 
         observArray.set(valueList)
     })

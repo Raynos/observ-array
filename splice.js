@@ -1,6 +1,7 @@
 var slice = Array.prototype.slice
 
 var addListener = require("./add-listener.js")
+var setNonEnumerable = require("./lib/set-non-enumerable.js");
 
 module.exports = splice
 
@@ -42,7 +43,7 @@ function splice(index, amount) {
         }
     })
 
-    valueList._diff = valueArgs
+    setNonEnumerable(valueList, "_diff", valueArgs)
 
     obs.set(valueList)
     return removed
