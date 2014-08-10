@@ -4,6 +4,7 @@ var Observ = require("observ")
 module.exports = ObservArray
 
 var splice = require("./splice.js")
+var put = require('./put.js')
 var ArrayMethods = require("./array-methods.js")
 var addListener = require("./add-listener.js")
 
@@ -66,10 +67,6 @@ function ObservArray(initialList) {
 
 function get(index) {
     return this._list[index]
-}
-
-function put(index, value) {
-    this.splice(index, 1, value)
 }
 
 function getLength() {
