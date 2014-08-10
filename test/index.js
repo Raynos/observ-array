@@ -258,7 +258,10 @@ test("can put values into array beyond length", function (assert) {
 
     assert.equal(changes.length, 2)
     assert.deepEqual(changes[0].slice(), ["foo", "bar", , , "baz"])
+    assert.deepEqual(changes[0]._diff, [4, 0, 'baz'])
+
     assert.deepEqual(changes[1].slice(), ["foo", "bar", , , "foobaz"])
+    assert.deepEqual(changes[1]._diff, [4, 1, 'foobaz'])
 
     assert.end()
 })
