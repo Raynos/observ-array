@@ -242,3 +242,23 @@ test("can remove values to observ & not blow up", function (assert) {
 
     assert.end()
 })
+
+test("can put values into array beyond length", function (assert) {
+    var arr = ObservArray([ Observ("foo"), Observ("bar") ])
+    var changes = []
+
+    arr(function (state) {
+        changes.push(state)
+    })
+
+    var baz = Observ("baz")
+    arr.put(4, baz)
+
+    baz.set("foobaz")
+
+    assert.equal(changes.length, 2)
+    assert.deepEqual(changes[0].slice(), ["foo", "bar", , , "baz"])
+    assert.deepEqual(changes[1].slice(), ["foo", "bar", , , "foobaz"])
+
+    assert.end()
+})
