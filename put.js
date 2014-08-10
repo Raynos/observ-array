@@ -10,6 +10,7 @@ function put(index, value) {
     var obs = this
     var valueList = obs().slice()
 
+    var originalLength = valueList.length
     valueList[index] = typeof value === "function" ? value() : value
 
     var removed = obs._list[index]
@@ -27,7 +28,10 @@ function put(index, value) {
         null
 
     // fake splice diff
-    var diff = [index, 0, valueList[index]]
+    var diff = index < originalLength ? 
+        [index, 1, valueList[index]] :
+        [index, 0, valueList[index]]
+
     setNonEnumerable(valueList, "_diff", diff)
 
     obs.set(valueList)
