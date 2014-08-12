@@ -51,7 +51,7 @@ test("ObservArray emits change", function (assert) {
     assert.notEqual(changes[0], changes[1])
     assert.ok(changes[0]._diff)
     assert.equal(Object.keys(changes[0]).indexOf("_diff"), -1)
-    assert.deepEqual(changes[0]._diff, [0, 1, "foo2"])
+    assert.deepEqual(changes[0]._diff, [ [0, 1, "foo2"] ])
     assert.deepEqual(changes[0].slice(), ["foo2", "bar"])
     assert.deepEqual(changes[1].slice(), ["foo2", "bar2"])
 
@@ -256,9 +256,9 @@ test("can use put to override existing value", function (assert) {
 
     assert.equal(changes.length, 2)
     assert.deepEqual(changes[0].slice(), ["baz", "bar"])
-    assert.deepEqual(changes[0]._diff, [0, 1, "baz"])
+    assert.deepEqual(changes[0]._diff, [ [0, 1, "baz"] ])
     assert.deepEqual(changes[1].slice(), ["baz", "foobar"])
-    assert.deepEqual(changes[1]._diff, [1, 1, "foobar"])
+    assert.deepEqual(changes[1]._diff, [ [1, 1, "foobar"] ])
 
     assert.end()
 })
@@ -278,9 +278,9 @@ test("can put values into array beyond length", function (assert) {
 
     assert.equal(changes.length, 2)
     assert.deepEqual(changes[0].slice(), ["foo", "bar", , , "baz"])
-    assert.deepEqual(changes[0]._diff, [4, 0, "baz"])
+    assert.deepEqual(changes[0]._diff, [ [4, 0, "baz"] ])
     assert.deepEqual(changes[1].slice(), ["foo", "bar", , , "foobaz"])
-    assert.deepEqual(changes[1]._diff, [4, 1, "foobaz"])
+    assert.deepEqual(changes[1]._diff, [ [4, 1, "foobaz"] ])
 
     assert.end()
 })

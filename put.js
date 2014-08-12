@@ -27,11 +27,11 @@ function put(index, value) {
         null
 
     // fake splice diff
-    var diff = index < originalLength ? 
+    var valueArgs = index < originalLength ? 
         [index, 1, valueList[index]] :
         [index, 0, valueList[index]]
 
-    setNonEnumerable(valueList, "_diff", diff)
+    setNonEnumerable(valueList, "_diff", [valueArgs])
 
     obs.set(valueList)
     return value
