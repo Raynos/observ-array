@@ -72,7 +72,7 @@ function handleChange(value) {
   // this will only be called once
   // changes are batched into a single diff
   value._diff //= [ [1,1,"baz","bazbar","foobar", , "foobarbaz"],
-                    [0,0,"foobaz"] ]
+              //    [0,0,"foobaz"] ]
 }
 ```
 
