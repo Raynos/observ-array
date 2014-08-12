@@ -251,14 +251,14 @@ test("can use put to override existing value", function (assert) {
         changes.push(state)
     })
 
-    arr.put(0, Observ('baz'))
-    arr.put(1, Observ('foobar'))
+    arr.put(0, Observ("baz"))
+    arr.put(1, Observ("foobar"))
 
     assert.equal(changes.length, 2)
     assert.deepEqual(changes[0].slice(), ["baz", "bar"])
-    assert.deepEqual(changes[0]._diff, [0, 1, 'baz'])
+    assert.deepEqual(changes[0]._diff, [0, 1, "baz"])
     assert.deepEqual(changes[1].slice(), ["baz", "foobar"])
-    assert.deepEqual(changes[1]._diff, [1, 1, 'foobar'])
+    assert.deepEqual(changes[1]._diff, [1, 1, "foobar"])
 
     assert.end()
 })
@@ -278,9 +278,9 @@ test("can put values into array beyond length", function (assert) {
 
     assert.equal(changes.length, 2)
     assert.deepEqual(changes[0].slice(), ["foo", "bar", , , "baz"])
-    assert.deepEqual(changes[0]._diff, [4, 0, 'baz'])
+    assert.deepEqual(changes[0]._diff, [4, 0, "baz"])
     assert.deepEqual(changes[1].slice(), ["foo", "bar", , , "foobaz"])
-    assert.deepEqual(changes[1]._diff, [4, 1, 'foobaz'])
+    assert.deepEqual(changes[1]._diff, [4, 1, "foobaz"])
 
     assert.end()
 })

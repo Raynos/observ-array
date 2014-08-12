@@ -4,7 +4,7 @@ var Observ = require("observ")
 module.exports = ObservArray
 
 var splice = require("./splice.js")
-var put = require('./put.js')
+var put = require("./put.js")
 var ArrayMethods = require("./array-methods.js")
 var addListener = require("./add-listener.js")
 

@@ -13,7 +13,6 @@ function put(index, value) {
     var originalLength = valueList.length
     valueList[index] = typeof value === "function" ? value() : value
 
-    var removed = obs._list[index]
     obs._list[index] = value
 
     // remove past value listener if was observ
