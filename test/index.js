@@ -284,3 +284,51 @@ test("can put values into array beyond length", function (assert) {
 
     assert.end()
 })
+
+test("batch changes with transactions", function (assert) {
+
+    var items = {
+        foo: Observ("foo"),
+        bar: Observ("bar"),
+        foobar: Observ("foobar"),
+        baz: Observ("baz"),
+        bazbar: Observ("bazbar"),
+        foobaz: Observ("foobaz"),
+        foobarbaz: Observ("foobarbaz")
+    }
+
+    var arr = ObservArray([ items.foo, items.bar ])
+    var changes = []
+
+    arr(function (state) {
+        changes.push(state)
+    })
+
+    arr.transaction(function(transaction){
+        transaction.push(items.foobar)
+        transaction.splice(1, 1, items.baz, items.bazbar)
+        transaction.unshift(items.foobaz)
+        transaction.put(6, items.foobarbaz)
+    })
+
+    assert.equal(changes.length, 1)
+
+    assert.deepEqual(changes[0].slice(), [
+        "foobaz","foo","baz","bazbar","foobar",,"foobarbaz"
+    ])
+
+    // check internal list
+    assert.equal(arr._list.length, changes[0].length)
+    changes[0].forEach(function(val, i){
+        assert.equal(arr._list[i], items[val])
+    })
+
+    assert.deepEqual(changes[0]._diff, [
+        [2, 0, "foobar"],
+        [1, 1, "baz", "bazbar"],
+        [0, 0, "foobaz"],
+        [6, 0, "foobarbaz"]
+    ])
+
+    assert.end()
+})
