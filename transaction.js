@@ -1,32 +1,21 @@
-var ObservArray = require("./index.js")
 var addListener = require("./add-listener.js")
 var setNonEnumerable = require("./lib/set-non-enumerable.js")
+var adiff = require("adiff")
 
 module.exports = transaction
 
 function transaction (func) {
     var obs = this
-    var array = ObservArray(obs().slice())
+    var rawList = obs._list.slice()
 
-    var changes = []
-    var objectChanges = []
+    if (func(rawList) !== false){ // allow cancel
 
-    array(function(value){
-        if (value._diff) {
-            Array.prototype.push.apply(changes, value._diff)
-            value._diff.forEach(function (valueArgs) {
-                objectChanges.push(getObjectArgs(array, valueArgs))
-            })  
-        }
-    })
-
-    if (func(array) !== false && changes.length){ // allow cancel
+        var changes = adiff.diff(obs._list, rawList)
         var valueList = obs().slice()
 
-        changes.forEach(applyValueChanges.bind(valueList))
-        objectChanges.forEach(applyObjectChanges.bind(obs))
+        var valueChanges = changes.map(applyPatch.bind(obs, valueList))
 
-        setNonEnumerable(valueList, "_diff", changes)
+        setNonEnumerable(valueList, "_diff", valueChanges)
 
         obs.set(valueList)
         return changes
@@ -34,62 +23,35 @@ function transaction (func) {
 
 }
 
-function getObjectArgs (array, valueArgs){
-    return valueArgs.map(function (value, i) {
-        if (i < 2){
-            return value
-        }
-        return array.get(i+valueArgs[0]-2)
-    })
-}
-
-function applyValueChanges (valueArgs) {
-    var valueList = this
-    if (valueArgs[0] > valueList.length){ 
-        valueArgs.slice(2).forEach(function(value, i){
-            var index = valueArgs[0]+i
-            valueList[index] = value
-        })
-    } else {
-        Array.prototype.splice.apply(valueList, valueArgs)
-    }
-}
-
-function applyObjectChanges (args) {
+function applyPatch (valueList, args) {
     var obs = this
-    if (args[0] > obs._list.length){
+    var valueArgs = args.map(unpack)
 
-        args.slice(2).forEach(function(value, i){
-            var index = args[0]+i
-            var listener = typeof value === "function" ?
-                addListener(obs, value) :
-                null
+    valueList.splice.apply(valueList, valueArgs)
+    obs._list.splice.apply(obs._list, args)
 
-            if (obs._removeListeners[index]){
-                obs._removeListeners[index]()
-            }
+    var extraRemoveListeners = args.slice(2).map(function (observ) {
+        return typeof observ === "function" ?
+            addListener(obs, observ) :
+            null
+    })
 
-            obs._removeListeners[index] = listener
-            obs._list[index] = value
-        })
+    extraRemoveListeners.unshift(args[0], args[1])
+    var removedListeners = obs._removeListeners.splice
+        .apply(obs._removeListeners, extraRemoveListeners)
 
-    } else {
+    removedListeners.forEach(function (removeObservListener) {
+        if (removeObservListener) {
+            removeObservListener()
+        }
+    })
 
-        obs._list.splice.apply(obs._list, args)
-        var extraRemoveListeners = args.slice(2).map(function (observ) {
-            return typeof observ === "function" ?
-                addListener(obs, observ) :
-                null
-        })
-        extraRemoveListeners.unshift(args[0], args[1])
-        var removedListeners = obs._removeListeners.splice
-            .apply(obs._removeListeners, extraRemoveListeners)
+    return valueArgs
+}
 
-        removedListeners.forEach(function (removeObservListener) {
-            if (removeObservListener) {
-                removeObservListener()
-            }
-        })
-
+function unpack(value, index){
+    if (index === 0 || index === 1) {
+        return value
     }
+    return typeof value === "function" ? value() : value
 }

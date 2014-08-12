@@ -304,17 +304,17 @@ test("batch changes with transactions", function (assert) {
         changes.push(state)
     })
 
-    arr.transaction(function(transaction){
-        transaction.push(items.foobar)
-        transaction.splice(1, 1, items.baz, items.bazbar)
-        transaction.unshift(items.foobaz)
-        transaction.put(6, items.foobarbaz)
+    arr.transaction(function(rawList){
+        rawList.push(items.foobar)
+        rawList.splice(1, 1, items.baz, items.bazbar)
+        rawList.unshift(items.foobaz)
+        rawList[6] = items.foobarbaz
     })
 
     assert.equal(changes.length, 1)
 
     assert.deepEqual(changes[0].slice(), [
-        "foobaz","foo","baz","bazbar","foobar",,"foobarbaz"
+        "foobaz","foo","baz","bazbar","foobar", undefined, "foobarbaz"
     ])
 
     // check internal list
@@ -324,10 +324,8 @@ test("batch changes with transactions", function (assert) {
     })
 
     assert.deepEqual(changes[0]._diff, [
-        [2, 0, "foobar"],
-        [1, 1, "baz", "bazbar"],
-        [0, 0, "foobaz"],
-        [6, 0, "foobarbaz"]
+        [1,1,"baz","bazbar","foobar", undefined, "foobarbaz"],
+        [0,0,"foobaz"]
     ])
 
     assert.end()

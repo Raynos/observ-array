@@ -61,21 +61,18 @@ var array = ObservArray([ Observ("foo"), Observ("bar") ])
 
 var removeListener = array(handleChange)
 
-array.transaction(function(transaction) {
-  // `transaction` is a copy of `array` that will be batch merged
-  transaction.push(Observ("foobar"))
-  transaction.splice(1, 1, Observ("baz"), Observ("bazbar"))
-  transaction.unshift(Observ("foobaz"))
-  transaction.put(6, Observ("foobarbaz"))
+array.transaction(function(rawList) {
+  rawList.push(Observ("foobar"))
+  rawList.splice(1, 1, Observ("baz"), Observ("bazbar"))
+  rawList.unshift(Observ("foobaz"))
+  rawList[6] = Observ("foobarbaz")
 })
 
 function handleChange(value) {
   // this will only be called once
   // changes are batched into a single diff
-  value._diff //= [ [2, 0, "foobar"],
-              //    [1, 1, "baz", "bazbar"],
-              //    [0, 0, "foobaz"],
-              //    [6, 0, "foobarbaz"] ]    
+  value._diff //= [ [1,1,"baz","bazbar","foobar", , "foobarbaz"],
+                    [0,0,"foobaz"] ]
 }
 ```
 
