@@ -43,7 +43,7 @@ function splice(index, amount) {
         }
     })
 
-    setNonEnumerable(valueList, "_diff", valueArgs)
+    setNonEnumerable(valueList, "_diff", [valueArgs])
 
     obs.set(valueList)
     return removed

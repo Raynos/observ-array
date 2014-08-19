@@ -5,8 +5,10 @@ module.exports = ObservArray
 
 var splice = require("./splice.js")
 var put = require("./put.js")
+var transaction = require("./transaction.js")
 var ArrayMethods = require("./array-methods.js")
 var addListener = require("./add-listener.js")
+
 
 /*  ObservArray := (Array<T>) => Observ<
         Array<T> & { _diff: Array }
@@ -46,6 +48,7 @@ function ObservArray(initialList) {
     obs.get = get
     obs.getLength = getLength
     obs.put = put
+    obs.transaction = transaction
 
     // you better not mutate this list directly
     // this is the list of observs instances

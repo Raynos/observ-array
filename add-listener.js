@@ -21,7 +21,7 @@ function addListener(observArray, observ) {
         }
 
         valueList.splice(index, 1, value)
-        setNonEnumerable(valueList, "_diff", [index, 1, value])
+        setNonEnumerable(valueList, "_diff", [ [index, 1, value] ])
 
         observArray.set(valueList)
     })

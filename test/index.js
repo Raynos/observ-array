@@ -51,7 +51,7 @@ test("ObservArray emits change", function (assert) {
     assert.notEqual(changes[0], changes[1])
     assert.ok(changes[0]._diff)
     assert.equal(Object.keys(changes[0]).indexOf("_diff"), -1)
-    assert.deepEqual(changes[0]._diff, [0, 1, "foo2"])
+    assert.deepEqual(changes[0]._diff, [ [0, 1, "foo2"] ])
     assert.deepEqual(changes[0].slice(), ["foo2", "bar"])
     assert.deepEqual(changes[1].slice(), ["foo2", "bar2"])
 
@@ -256,9 +256,9 @@ test("can use put to override existing value", function (assert) {
 
     assert.equal(changes.length, 2)
     assert.deepEqual(changes[0].slice(), ["baz", "bar"])
-    assert.deepEqual(changes[0]._diff, [0, 1, "baz"])
+    assert.deepEqual(changes[0]._diff, [ [0, 1, "baz"] ])
     assert.deepEqual(changes[1].slice(), ["baz", "foobar"])
-    assert.deepEqual(changes[1]._diff, [1, 1, "foobar"])
+    assert.deepEqual(changes[1]._diff, [ [1, 1, "foobar"] ])
 
     assert.end()
 })
@@ -278,9 +278,55 @@ test("can put values into array beyond length", function (assert) {
 
     assert.equal(changes.length, 2)
     assert.deepEqual(changes[0].slice(), ["foo", "bar", , , "baz"])
-    assert.deepEqual(changes[0]._diff, [4, 0, "baz"])
+    assert.deepEqual(changes[0]._diff, [ [4, 0, "baz"] ])
     assert.deepEqual(changes[1].slice(), ["foo", "bar", , , "foobaz"])
-    assert.deepEqual(changes[1]._diff, [4, 1, "foobaz"])
+    assert.deepEqual(changes[1]._diff, [ [4, 1, "foobaz"] ])
+
+    assert.end()
+})
+
+test("batch changes with transactions", function (assert) {
+
+    var items = {
+        foo: Observ("foo"),
+        bar: Observ("bar"),
+        foobar: Observ("foobar"),
+        baz: Observ("baz"),
+        bazbar: Observ("bazbar"),
+        foobaz: Observ("foobaz"),
+        foobarbaz: Observ("foobarbaz")
+    }
+
+    var arr = ObservArray([ items.foo, items.bar ])
+    var changes = []
+
+    arr(function (state) {
+        changes.push(state)
+    })
+
+    arr.transaction(function(rawList){
+        rawList.push(items.foobar)
+        rawList.splice(1, 1, items.baz, items.bazbar)
+        rawList.unshift(items.foobaz)
+        rawList[6] = items.foobarbaz
+    })
+
+    assert.equal(changes.length, 1)
+
+    assert.deepEqual(changes[0].slice(), [
+        "foobaz","foo","baz","bazbar","foobar", undefined, "foobarbaz"
+    ])
+
+    // check internal list
+    assert.equal(arr._list.length, changes[0].length)
+    changes[0].forEach(function(val, i){
+        assert.equal(arr._list[i], items[val])
+    })
+
+    assert.deepEqual(changes[0]._diff, [
+        [1,1,"baz","bazbar","foobar", undefined, "foobarbaz"],
+        [0,0,"foobaz"]
+    ])
 
     assert.end()
 })
