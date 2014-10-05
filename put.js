@@ -33,6 +33,6 @@ function put(index, value) {
 
     setNonEnumerable(valueList, "_diff", [valueArgs])
 
-    obs.set(valueList)
+    obs._observSet(valueList)
     return value
 }

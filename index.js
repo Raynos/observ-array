@@ -5,6 +5,7 @@ module.exports = ObservArray
 
 var splice = require("./splice.js")
 var put = require("./put.js")
+var set = require("./set.js")
 var transaction = require("./transaction.js")
 var ArrayMethods = require("./array-methods.js")
 var addListener = require("./add-listener.js")
@@ -44,6 +45,10 @@ function ObservArray(initialList) {
 
     var obs = Observ(initialState)
     obs.splice = splice
+
+    // override set and store original for later use
+    obs._observSet = obs.set
+    obs.set = set
 
     obs.get = get
     obs.getLength = getLength

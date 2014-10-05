@@ -330,3 +330,36 @@ test("batch changes with transactions", function (assert) {
 
     assert.end()
 })
+
+test("set updates array rather than replacing observ value", function (assert) {
+
+    var items = {
+        foo: Observ("foo"),
+        bar: Observ("bar"),
+        foobar: Observ("foobar"),
+        baz: Observ("baz"),
+        bazbar: Observ("bazbar")
+    }
+
+    var arr = ObservArray([ items.foo, items.bar, items.baz ])
+    var changes = []
+
+    arr(function (state) {
+        changes.push(state)
+    })
+
+    arr.set([ items.foo, items.foobar, items.baz, items.bazbar ])
+
+    assert.equal(changes.length, 1)
+
+    assert.deepEqual(changes[0].slice(), [
+        "foo","foobar","baz","bazbar"
+    ])
+
+    assert.deepEqual(changes[0]._diff, [
+        [3,0,"bazbar"],
+        [1,1,"foobar"]
+    ])
+
+    assert.end()
+})
