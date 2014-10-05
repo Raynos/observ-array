@@ -5,6 +5,8 @@ var adiff = require("adiff")
 module.exports = set
 
 function set(rawList) {
+    if (!Array.isArray(rawList)) rawList = []
+        
     var obs = this
     var changes = adiff.diff(obs._list, rawList)
     var valueList = obs().slice()
