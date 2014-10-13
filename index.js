@@ -71,7 +71,7 @@ function ObservArray(initialList) {
     obs._removeListeners = removeListeners
 
     obs._type = "observ-array"
-    obs._version = "5"
+    obs._version = "3"
 
     return ArrayMethods(obs, list)
 }
