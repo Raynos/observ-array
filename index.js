@@ -23,12 +23,12 @@ var addListener = require("./add-listener.js")
 
     Fix to make it more like ObservHash.
 
-    I.e. you write observables into it. 
+    I.e. you write observables into it.
         reading methods take plain JS objects to read
         and the value of the array is always an array of plain
         objsect.
 
-        The observ array instance itself would have indexed 
+        The observ array instance itself would have indexed
         properties that are the observables
 */
 function ObservArray(initialList) {
@@ -69,6 +69,9 @@ function ObservArray(initialList) {
     // not calling this means we do not GC our observ change
     // listeners. Which causes rage bugs
     obs._removeListeners = removeListeners
+
+    obs._type = "observ-array"
+    obs._version = "5"
 
     return ArrayMethods(obs, list)
 }
