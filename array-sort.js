@@ -50,12 +50,12 @@ function getValueList(list) {
 }
 
 function pluck(needle, haystack) {
-    var f = false
+    var fnd = false
     for(var i = 0; i < haystack.length; i++) {
         if(needle === haystack[i].val) {
-            f = haystack[i]
+            fnd = haystack[i]
             break
         }
     }
-    return f
+    return fnd
 }
