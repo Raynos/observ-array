@@ -335,3 +335,40 @@ test("can call array methods on sorted ObservArray", function (assert) {
     assert.end()
 })
 
+test("sort should maintain observ objects of the same value", function(assert) {
+    var a1 = Observ("A")
+    var a2 = Observ("A")
+    var b1 = Observ("B")
+
+    var arr = ObservArray([ a1, b1, a2 ])
+
+    var changes = []
+
+    arr(function(state) {
+        changes.push(state)
+    })
+
+    arr.sort()
+
+    a1.set("A1")
+    a2.set("A2")
+
+    assert.equal(changes.length, 3)
+
+    assert.deepEqual(changes[0].slice(), [ "A", "A", "B" ])
+    assert.deepEqual(changes[0]._diff, [
+         [ 0, 3, "A", "A", "B" ]
+    ])
+
+    assert.deepEqual(changes[1].slice(), [ "A1", "A", "B" ])
+    assert.deepEqual(changes[1]._diff, [
+        [ 0, 1, "A1" ]
+    ])
+
+    assert.deepEqual(changes[2].slice(), [ "A1", "A2", "B" ])
+    assert.deepEqual(changes[2]._diff, [
+         [ 1, 1, "A2" ]
+    ])
+
+    assert.end()
+})
