@@ -7,13 +7,16 @@ function sort(compare) {
     var obs = this
     var list = obs._list.slice()
     var unpacked = unpack(list)
+
     var sorted = unpacked
             .map(function(it) { return it.val })
             .sort(compare)
-    
-    //var sorted = getValueList(unpacked).sort(compare)
+
     var packed = repack(sorted, unpacked)
 
+    //fake diff - for perf
+    //adiff on 10k items === ~3200ms
+    //fake on 10k items === ~110ms
     var changes = [ [ 0, packed.length ].concat(packed) ]
 
     var valueChanges = changes.map(applyPatch.bind(obs, sorted))
@@ -52,12 +55,4 @@ function indexOf(n, h) {
         if(n === h[i].val) return i
     }
     return -1
-}
-
-function getValueList(list) {
-    var vals = []
-    for(var i = 0; i < list.length; i++) {
-        vals.push(list[i].val)
-    }
-    return vals
 }
