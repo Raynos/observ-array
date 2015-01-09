@@ -368,3 +368,59 @@ test("set updates reversed array rather than replacing observ value", function (
     assert.end()
 })
 
+test("reverse preserves observables after reversing", function(assert) {
+    var items = {
+        foo: Observ("foo"),
+        bar: Observ("foo"),
+        foobar: Observ("foo"),
+        baz: Observ("foo"),
+        bazbar: Observ("foo")
+    }
+
+    var arr = ObservArray([ items.foo, items.bar, items.foobar ])
+
+    var changes = []
+
+    arr(function(state) {
+      changes.push(state)
+    })
+
+    arr.reverse()
+
+    items.foo.set("foo2")
+    items.bar.set("bar")
+    items.foobar.set("foobar")
+
+    assert.equal(changes.length, 4)
+
+    assert.deepEqual(changes[0].slice(), [
+      "foo", "foo", "foo"
+    ])
+    assert.deepEqual(changes[0]._diff, [
+      [ 0, 1, "foo" ],
+      [ 2, 1, "foo" ]
+    ])
+
+    assert.deepEqual(changes[1], [
+      "foo", "foo", "foo2"
+    ])
+    assert.deepEqual(changes[1]._diff, [
+      [ 2, 1, "foo2" ]
+    ])
+
+    assert.deepEqual(changes[2], [
+      "foo", "bar", "foo2"
+    ])
+    assert.deepEqual(changes[2]._diff, [
+      [ 1, 1, "bar" ]
+    ])
+
+    assert.deepEqual(changes[3], [
+      "foobar", "bar", "foo2"
+    ])
+    assert.deepEqual(changes[3]._diff, [
+      [ 0, 1, "foobar" ]
+    ])
+
+    assert.end()
+})
