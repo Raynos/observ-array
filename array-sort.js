@@ -7,7 +7,11 @@ function sort(compare) {
     var obs = this
     var list = obs._list.slice()
     var unpacked = unpack(list)
-    var sorted = getValueList(unpacked).sort(compare)
+    var sorted = unpacked
+            .map(function(it) { return it.val })
+            .sort(compare)
+    
+    //var sorted = getValueList(unpacked).sort(compare)
     var packed = repack(sorted, unpacked)
 
     var changes = [ [ 0, packed.length ].concat(packed) ]
@@ -32,13 +36,22 @@ function unpack(list) {
 }
 
 function repack(sorted, unpacked) {
-  var packed = []
-  for(var i = 0; i < sorted.length; i++) {
-      var val = sorted[i]
-      var fnd = pluck(val, unpacked)
-      packed.push(fnd.obj)
-  }
-  return packed
+    var packed = []
+
+    while(sorted.length) {
+        var s = sorted.shift()
+        var indx = indexOf(s, unpacked)
+        if(~indx) packed.push(unpacked.splice(indx, 1)[0].obj)
+    }
+
+    return packed
+}
+
+function indexOf(n, h) {
+    for(var i = 0; i < h.length; i++) {
+        if(n === h[i].val) return i
+    }
+    return -1
 }
 
 function getValueList(list) {
@@ -47,15 +60,4 @@ function getValueList(list) {
         vals.push(list[i].val)
     }
     return vals
-}
-
-function pluck(needle, haystack) {
-    var fnd = false
-    for(var i = 0; i < haystack.length; i++) {
-        if(needle === haystack[i].val) {
-            fnd = haystack[i]
-            break
-        }
-    }
-    return fnd
 }
