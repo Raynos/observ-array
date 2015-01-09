@@ -6,6 +6,7 @@ module.exports = sort
 function sort(compare) {
     var obs = this
     var list = obs._list.slice()
+
     var unpacked = unpack(list)
 
     var sorted = unpacked
