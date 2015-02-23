@@ -27,8 +27,8 @@ function ArrayMethods(obs) {
     obs.pop = observArrayPop
     obs.shift = observArrayShift
     obs.unshift = observArrayUnshift
-    obs.reverse = notImplemented
-    obs.sort = notImplemented
+    obs.reverse = require("./array-reverse.js")
+    obs.sort = require("./array-sort.js")
 
     methods.forEach(function (tuple) {
         obs[tuple[0]] = tuple[1]

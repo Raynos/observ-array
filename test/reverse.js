@@ -1,64 +1,59 @@
-var test = require("tape")
+var test  = require('tape')
 var Observ = require("observ")
 var computed = require("observ/computed")
-
+var Struct   = require('observ-struct')
 var ObservArray = require("../index")
 
-test("ObservArray is a function", function (assert) {
-    assert.equal(typeof ObservArray, "function")
-    assert.end()
+test("ObservArray array.reverse should work", function (assert) {
+  var arr = ObservArray([
+    Observ(1),
+    Observ(2),
+    Observ(3)
+  ])
+
+  var changes = []
+  var initial = arr()
+
+  arr(function(state) {
+    changes.push(state)
+  })
+
+  arr.reverse()
+
+  var reversed = arr()
+
+  assert.equal(changes.length, 1)
+  assert.deepEqual(changes[0], [3, 2, 1])
+  assert.deepEqual(changes[0]._diff, [ [0, 1, 3], [2, 1, 1] ])
+
+  assert.end()
 })
 
-test("ObservArray contains correct initial value", function (assert) {
-    var arr = ObservArray([
-        Observ("foo"),
-        Observ("bar"),
-        Observ("baz"),
-        "foobar"
-    ])
-    var initial = arr()
+test("still emits changes after reversal", function (assert) {
+  var arr = ObservArray([
+    Observ("foo"),
+    Observ("bar"),
+    Observ("baz")
+  ])
 
-    assert.equal(typeof arr.filter, "function")
-    assert.equal(typeof arr.splice, "function")
-    assert.equal(initial.length, 4)
-    assert.deepEqual(initial, ["foo", "bar", "baz", "foobar"])
+  var changes = []
 
-    assert.equal(arr[0], undefined)
-    assert.equal(arr[1], undefined)
-    assert.notEqual(arr.length, 4)
+  arr(function(state) {
+    changes.push(state)
+  })
 
-    assert.end()
+  arr.reverse()
+  arr.get(0).set("baz2")
+  arr.get(1).set("bar2")
+
+  assert.equal(changes.length, 3)
+  assert.deepEqual(changes[1], [ "baz2", "bar", "foo" ])
+  assert.deepEqual(changes[2], [ "baz2", "bar2", "foo" ])
+
+  assert.end()
 })
 
-test("ObservArray emits change", function (assert) {
-    var arr = ObservArray([
-        Observ("foo"),
-        Observ("bar")
-    ])
-    var initArr = arr()
-    var changes = []
-
-    arr(function (state) {
-        changes.push(state)
-    })
-
-    arr.get(0).set("foo2")
-    arr.get(1).set("bar2")
-
-    assert.equal(changes.length, 2)
-    assert.deepEqual(initArr, ["foo", "bar"])
-    assert.notEqual(initArr, changes[0])
-    assert.notEqual(changes[0], changes[1])
-    assert.ok(changes[0]._diff)
-    assert.equal(Object.keys(changes[0]).indexOf("_diff"), -1)
-    assert.deepEqual(changes[0]._diff, [ [0, 1, "foo2"] ])
-    assert.deepEqual(changes[0].slice(), ["foo2", "bar"])
-    assert.deepEqual(changes[1].slice(), ["foo2", "bar2"])
-
-    assert.end()
-})
-
-test("works with nested arrays", function (assert) {
+test("reverse works with nested arrays", function (assert) {
     var arr = ObservArray([
         Observ("foo"),
         ObservArray([
@@ -78,16 +73,24 @@ test("works with nested arrays", function (assert) {
         innerChanges.push(state)
     })
 
-    arr.get(1).get(0).set("bar2")
-    arr.get(0).set("foo2")
-    arr.get(1).get(1).set("baz2")
+    arr.reverse()
 
-    assert.equal(changes.length, 3)
+    arr.get(0).get(0).set("bar2")
+    arr.get(0).get(1).set("baz2")
+    arr.get(1).set("foo2")
+
+    assert.equal(changes.length, 4)
     assert.equal(innerChanges.length, 2)
+
+    assert.deepEqual(changes[0], [
+      [ "bar", "baz" ],
+      "foo"
+    ])
 
     assert.notEqual(changes[0], initArr)
     assert.notEqual(changes[1], changes[0])
     assert.notEqual(changes[2], changes[1])
+    assert.notEqual(changes[3], changes[2])
 
     assert.notEqual(innerChanges[0], initArr[1])
     assert.notEqual(innerChanges[1], innerChanges[0])
@@ -96,12 +99,14 @@ test("works with nested arrays", function (assert) {
         "foo",
         ["bar", "baz"]
     ])
-    assert.equal(changes[0][0], "foo")
-    assert.deepEqual(changes[0][1].slice(), ["bar2", "baz"])
-    assert.equal(changes[1][0], "foo2")
-    assert.deepEqual(changes[1][1].slice(), ["bar2", "baz"])
-    assert.equal(changes[2][0], "foo2")
-    assert.deepEqual(changes[2][1].slice(), ["bar2", "baz2"])
+
+    assert.deepEqual(changes[1][0].slice(), ["bar2", "baz"])
+    assert.equal(changes[1][1], "foo")
+
+    assert.deepEqual(changes[2][0].slice(), ["bar2", "baz2"])
+    assert.equal(changes[2][1], "foo")
+
+    assert.equal(changes[3][1], "foo2")
 
     assert.deepEqual(initArr[1], ["bar", "baz"])
     assert.deepEqual(innerChanges[0].slice(), ["bar2", "baz"])
@@ -113,8 +118,10 @@ test("works with nested arrays", function (assert) {
     assert.end()
 })
 
-test("can call array methods on value inside", function (assert) {
+test("can call array methods on value inside reversed array", function (assert) {
     var arr = ObservArray([ Observ("foo"), Observ("bar") ])
+
+    arr.reverse()
 
     var v = arr()
 
@@ -124,12 +131,12 @@ test("can call array methods on value inside", function (assert) {
     })
 
     assert.ok(Array.isArray(v))
-    assert.deepEqual(doubles, [ "foofoo", "barbar" ])
+    assert.deepEqual(doubles, [ "barbar", "foofoo" ])
 
     assert.end()
 })
 
-test("can call array methods on ObservArray", function (assert) {
+test("can call array methods on reversed ObservArray", function (assert) {
     var arr = ObservArray([
         Observ(0),
         Observ(1),
@@ -138,9 +145,12 @@ test("can call array methods on ObservArray", function (assert) {
         Observ(5)
     ])
 
+    arr.reverse()
+
     var doubles = arr.map(function (o) {
         return computed([o], function (o) { return o * 2 })
     })
+
     var changes = []
 
     doubles(function (state) {
@@ -155,24 +165,27 @@ test("can call array methods on ObservArray", function (assert) {
 
     assert.equal(changes.length, 1)
     assert.deepEqual(changes[0].slice(), [
-        0, 2, 10, 6, 10
+        10, 6, 10, 2, 0
     ])
 
     doubles.push(Observ(8))
 
     assert.equal(changes.length, 2)
     assert.deepEqual(changes[1].slice(), [
-        0, 2, 10, 6, 10, 8
+        10, 6, 10, 2, 0, 8
     ])
 
     assert.end()
 })
 
-test("can add values to observ array", function (assert) {
+test("can add values to reversed observ array", function (assert) {
     var arr = ObservArray([
         Observ("foo"),
         Observ("bar")
     ])
+
+    arr.reverse()
+
     var changes = []
 
     arr(function (state) {
@@ -183,15 +196,17 @@ test("can add values to observ array", function (assert) {
     arr.splice(1, 1)
 
     assert.equal(changes.length, 2)
-    assert.deepEqual(changes[0].slice(), ["foo", "bar", "baz"])
-    assert.deepEqual(changes[1].slice(), ["foo", "baz"])
+    assert.deepEqual(changes[0].slice(), ["bar", "foo", "baz"])
+    assert.deepEqual(changes[1].slice(), ["bar", "baz"])
 
     assert.end()
 })
 
-test("can add values to observ array & listen", function (assert) {
+test("can add values to reversed observ array & listen", function (assert) {
     var arr = ObservArray([])
     var changes = []
+
+    arr.reverse()
 
     arr(function (state) {
         changes.push(state)
@@ -213,39 +228,11 @@ test("can add values to observ array & listen", function (assert) {
     assert.end()
 })
 
-test("can remove values to observ & not blow up", function (assert) {
+test("can use put to override existing value in reversed array", function (assert) {
     var arr = ObservArray([ Observ("foo"), Observ("bar") ])
     var changes = []
 
-    arr(function (state) {
-        changes.push(state)
-    })
-
-    var bar = arr.splice(1, 1)[0]
-
-    assert.doesNotThrow(function () {
-        bar.set("foobar")
-    })
-
-    arr.push(Observ("baz"))
-
-    var baz = arr.splice(1, 1)[0]
-
-    assert.doesNotThrow(function () {
-        baz.set("foobaz")
-    })
-
-    assert.equal(changes.length, 3)
-    assert.deepEqual(changes[0].slice(), ["foo"])
-    assert.deepEqual(changes[1].slice(), ["foo", "baz"])
-    assert.deepEqual(changes[2].slice(), ["foo"])
-
-    assert.end()
-})
-
-test("can use put to override existing value", function (assert) {
-    var arr = ObservArray([ Observ("foo"), Observ("bar") ])
-    var changes = []
+    arr.reverse()
 
     arr(function (state) {
         changes.push(state)
@@ -255,7 +242,7 @@ test("can use put to override existing value", function (assert) {
     arr.put(1, Observ("foobar"))
 
     assert.equal(changes.length, 2)
-    assert.deepEqual(changes[0].slice(), ["baz", "bar"])
+    assert.deepEqual(changes[0].slice(), ["baz", "foo"])
     assert.deepEqual(changes[0]._diff, [ [0, 1, "baz"] ])
     assert.deepEqual(changes[1].slice(), ["baz", "foobar"])
     assert.deepEqual(changes[1]._diff, [ [1, 1, "foobar"] ])
@@ -263,9 +250,11 @@ test("can use put to override existing value", function (assert) {
     assert.end()
 })
 
-test("can put values into array beyond length", function (assert) {
+test("can put values into reversed array beyond length", function (assert) {
     var arr = ObservArray([ Observ("foo"), Observ("bar") ])
     var changes = []
+
+    arr.reverse()
 
     arr(function (state) {
         changes.push(state)
@@ -277,15 +266,15 @@ test("can put values into array beyond length", function (assert) {
     baz.set("foobaz")
 
     assert.equal(changes.length, 2)
-    assert.deepEqual(changes[0].slice(), ["foo", "bar", , , "baz"])
+    assert.deepEqual(changes[0].slice(), ["bar", "foo", , , "baz"])
     assert.deepEqual(changes[0]._diff, [ [4, 0, "baz"] ])
-    assert.deepEqual(changes[1].slice(), ["foo", "bar", , , "foobaz"])
+    assert.deepEqual(changes[1].slice(), ["bar", "foo", , , "foobaz"])
     assert.deepEqual(changes[1]._diff, [ [4, 1, "foobaz"] ])
 
     assert.end()
 })
 
-test("batch changes with transactions", function (assert) {
+test("batch changes with transactions on reversed array", function (assert) {
 
     var items = {
         foo: Observ("foo"),
@@ -299,6 +288,8 @@ test("batch changes with transactions", function (assert) {
 
     var arr = ObservArray([ items.foo, items.bar ])
     var changes = []
+
+    arr.reverse()
 
     arr(function (state) {
         changes.push(state)
@@ -314,7 +305,7 @@ test("batch changes with transactions", function (assert) {
     assert.equal(changes.length, 1)
 
     assert.deepEqual(changes[0].slice(), [
-        "foobaz","foo","baz","bazbar","foobar", undefined, "foobarbaz"
+        "foobaz","bar","baz","bazbar","foobar", undefined, "foobarbaz"
     ])
 
     // check internal list
@@ -331,7 +322,7 @@ test("batch changes with transactions", function (assert) {
     assert.end()
 })
 
-test("set updates array rather than replacing observ value", function (assert) {
+test("set updates reversed array rather than replacing observ value", function (assert) {
 
     var items = {
         foo: Observ("foo"),
@@ -344,25 +335,92 @@ test("set updates array rather than replacing observ value", function (assert) {
     var arr = ObservArray([ items.foo, items.bar, items.baz ])
     var changes = []
 
+    arr.reverse()
+
     arr(function (state) {
         changes.push(state)
     })
 
+    assert.deepEqual(arr(), [ "baz", "bar", "foo" ])
+
     arr.set([ items.foo, items.foobar, items.baz, items.bazbar ])
 
-    assert.equal(changes.length, 1)
+    arr.reverse()
+
+    assert.equal(changes.length, 2)
 
     assert.deepEqual(changes[0].slice(), [
         "foo","foobar","baz","bazbar"
     ])
 
     assert.deepEqual(changes[0]._diff, [
-        [3,0,"bazbar"],
-        [1,1,"foobar"]
+        [0, 3, "foo","foobar","baz","bazbar"]
+    ])
+
+    assert.deepEqual(changes[1].slice(), [
+        "bazbar", "baz", "foobar", "foo"
+    ])
+
+    assert.deepEqual(changes[1]._diff, [
+        [0, 4, "bazbar", "baz", "foobar", "foo" ]
     ])
 
     assert.end()
 })
 
-require('./reverse.js')
-require('./sort.js')
+test("reverse preserves observables after reversing", function(assert) {
+    var items = {
+        foo: Observ("foo"),
+        bar: Observ("foo"),
+        foobar: Observ("foo"),
+        baz: Observ("foo"),
+        bazbar: Observ("foo")
+    }
+
+    var arr = ObservArray([ items.foo, items.bar, items.foobar ])
+
+    var changes = []
+
+    arr(function(state) {
+      changes.push(state)
+    })
+
+    arr.reverse()
+
+    items.foo.set("foo2")
+    items.bar.set("bar")
+    items.foobar.set("foobar")
+
+    assert.equal(changes.length, 4)
+
+    assert.deepEqual(changes[0].slice(), [
+      "foo", "foo", "foo"
+    ])
+    assert.deepEqual(changes[0]._diff, [
+      [ 0, 1, "foo" ],
+      [ 2, 1, "foo" ]
+    ])
+
+    assert.deepEqual(changes[1], [
+      "foo", "foo", "foo2"
+    ])
+    assert.deepEqual(changes[1]._diff, [
+      [ 2, 1, "foo2" ]
+    ])
+
+    assert.deepEqual(changes[2], [
+      "foo", "bar", "foo2"
+    ])
+    assert.deepEqual(changes[2]._diff, [
+      [ 1, 1, "bar" ]
+    ])
+
+    assert.deepEqual(changes[3], [
+      "foobar", "bar", "foo2"
+    ])
+    assert.deepEqual(changes[3]._diff, [
+      [ 0, 1, "foobar" ]
+    ])
+
+    assert.end()
+})
