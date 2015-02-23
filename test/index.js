@@ -357,8 +357,8 @@ test("set updates array rather than replacing observ value", function (assert) {
     ])
 
     assert.deepEqual(changes[0]._diff, [
-        [3,0,"bazbar"],
-        [1,1,"foobar"]
+        [1,1,"foobar"],
+        [3,0,"bazbar"]
     ])
 
     assert.end()
